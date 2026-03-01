@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.db
+
+# Vue
+node_modules/
+dist/
+
+# Redis
+dump.rdb
+
+# VS Code
+.vscode/
+
+# Environment
+.env
