@@ -7,3 +7,5 @@ class Config:
     SECURITY_PASSWORD_SALT = "devil-of-hell's-kitchen"
     SECURITY_REGISTERABLE = True
     SECURITY_SEND_REGISTER_EMAIL = False
+    SECURITY_REDIRTECT_BEHAVIOR = 'spa'  
+    WTF_CSRF_ENABLED = False 

@@ -17,3 +17,6 @@ dump.rdb
 
 # Environment
 .env
+
+#instance
+instance/

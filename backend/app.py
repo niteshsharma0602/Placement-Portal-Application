@@ -1,7 +1,8 @@
-from flask import Flask, app
+from flask import Flask
 from flask_security import Security, SQLAlchemyUserDatastore
 from config import Config
 from models import db, User, Role
+from routes.auth import init_auth_routes
 
 def create_app():
     app = Flask(__name__)
@@ -28,6 +29,8 @@ def create_app():
                 fs_uniquifier='admin-unique-id', 
                 roles=[admin_role]) 
             db.session.commit()
+
+    init_auth_routes(app,user_datastore)
 
     return app
 
