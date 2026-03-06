@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-dark bg-dark border-bottom px-4" v-if="currentUser">
+        <span class="navbar-brand fw-bold">Placement Portal</span>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-secondary">[[ currentUser.role ]]</span>
+            <span class="text-secondary small">[[ currentUser.email ]]</span>
+            <button class="btn btn-outline-secondary btn-sm" @click="logout">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Login page -->
+    <div v-if="page==='login'" class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-4 text-center">Placement Portal</h4>
+
+                        <ul class="nav nav-tabs mb-3">
+                            <li class="nav-item"><button class="nav-link" :class="{active: tab==='login'}" @click="tab='login'; msg=''">Login</button></li>
+                            <li class="nav-item"><button class="nav-link" :class="{active: tab==='student'}" @click="tab='student'; msg=''">Student</button></li>
+                            <li class="nav-item"><button class="nav-link" :class="{active: tab==='company'}" @click="tab='company'; msg=''">Company</button></li>
+                        </ul>
+
+                        <div v-if="msg" class="alert" :class="msgOk ? 'alert-success' : 'alert-danger'">[[ msg ]]</div>
+
+                        <!-- Login -->
+                        <div v-if="tab==='login'">
+                            <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" v-model="lf.email"></div>
+                            <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" v-model="lf.password"></div>
+                            <button class="btn btn-light w-100" @click="login" :disabled="loading">[[ loading ? 'Logging in...' : 'Login' ]]</button>
+                        </div>
+
+                        <!-- Student Register -->
+                        <div v-if="tab==='student'">
+                            <div class="mb-2"><label class="form-label">Full Name</label><input class="form-control" v-model="sf.name"></div>
+                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="sf.email"></div>
+                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="sf.password"></div>
+                            <div class="row">
+                                <div class="col mb-2"><label class="form-label">Branch</label><input class="form-control" v-model="sf.branch"></div>
+                                <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="sf.cgpa" step="0.1"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col mb-2"><label class="form-label">Year</label><input type="number" class="form-control" v-model="sf.year"></div>
+                                <div class="col mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="sf.skills"></div>
+                            </div>
+                            <button class="btn btn-light w-100 mt-2" @click="registerStudent" :disabled="loading">[[ loading ? 'Registering...' : 'Register' ]]</button>
+                        </div>
+
+                        <!-- Company Register -->
+                        <div v-if="tab==='company'">
+                            <div class="mb-2"><label class="form-label">Company Name</label><input class="form-control" v-model="cf.name"></div>
+                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="cf.email"></div>
+                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="cf.password"></div>
+                            <div class="row">
+                                <div class="col mb-2"><label class="form-label">Industry</label><input class="form-control" v-model="cf.industry"></div>
+                                <div class="col mb-2"><label class="form-label">HR Contact</label><input class="form-control" v-model="cf.hr_contact"></div>
+                            </div>
+                            <div class="mb-2"><label class="form-label">Website</label><input class="form-control" v-model="cf.website"></div>
+                            <button class="btn btn-light w-100 mt-2" @click="registerCompany" :disabled="loading">[[ loading ? 'Registering...' : 'Register' ]]</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard-->
+    <div v-if="page==='admin'" class="container-fluid mt-4">
+        <div class="row">
+
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='dashboard'}" @click="at='dashboard'; loadStats()">Dashboard</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='companies'}" @click="at='companies'; loadCompanies()">Companies</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='students'}" @click="at='students'; loadStudents()">Students</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='drives'}" @click="at='drives'; loadDrives()">Drives</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='applications'}" @click="at='applications'; loadApplications()">Applications</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: at==='search'}" @click="at='search'">Search</button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="col-md-10">
+
+                <div v-if="at==='dashboard'">
+                    <h4 class="mb-4">Dashboard</h4>
+                    <div class="row g-3">
+                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_students||0 ]]</h2><p class="text-secondary mb-0">Students</p></div></div>
+                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_companies||0 ]]</h2><p class="text-secondary mb-0">Companies</p></div></div>
+                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_drives||0 ]]</h2><p class="text-secondary mb-0">Drives</p></div></div>
+                    </div>
+                </div>
+
+                <div v-if="at==='companies'">
+                    <h4 class="mb-3">Companies</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Name</th><th>Industry</th><th>HR Contact</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr v-for="c in companies" :key="c.id">
+                                <td>[[ c.name ]]</td>
+                                <td>[[ c.industry ]]</td>
+                                <td>[[ c.hr_contact ]]</td>
+                                <td>
+                                    <span class="badge" :class="c.approval_status==='approved'?'bg-success':c.approval_status==='rejected'?'bg-danger':'bg-warning text-dark'">[[ c.approval_status ]]</span>
+                                    <span v-if="c.is_blacklisted" class="badge bg-danger ms-1">Blacklisted</span>
+                                </td>
+                                <td>
+                                    <button v-if="c.approval_status==='pending'" class="btn btn-success btn-sm me-1" @click="approveCompany(c.id,'approved')">Approve</button>
+                                    <button v-if="c.approval_status==='pending'" class="btn btn-danger btn-sm me-1" @click="approveCompany(c.id,'rejected')">Reject</button>
+                                    <button class="btn btn-outline-secondary btn-sm" @click="blacklistCompany(c.id,!c.is_blacklisted)">[[ c.is_blacklisted?'Unblock':'Block' ]]</button>
+                                </td>
+                            </tr>
+                            <tr v-if="companies.length===0"><td colspan="5" class="text-center text-secondary">No companies yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="at==='students'">
+                    <h4 class="mb-3">Students</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Name</th><th>Branch</th><th>CGPA</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr v-for="s in students" :key="s.id">
+                                <td>[[ s.name ]]</td><td>[[ s.branch ]]</td><td>[[ s.cgpa ]]</td><td>[[ s.year ]]</td>
+                                <td><span class="badge" :class="s.is_blacklisted?'bg-danger':'bg-success'">[[ s.is_blacklisted?'Blocked':'Active' ]]</span></td>
+                                <td><button class="btn btn-outline-secondary btn-sm" @click="blacklistStudent(s.id,!s.is_blacklisted)">[[ s.is_blacklisted?'Unblock':'Block' ]]</button></td>
+                            </tr>
+                            <tr v-if="students.length===0"><td colspan="6" class="text-center text-secondary">No students yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="at==='drives'">
+                    <h4 class="mb-3">Placement Drives</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Title</th><th>Company ID</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr v-for="d in drives" :key="d.id">
+                                <td>[[ d.title ]]</td><td>[[ d.company_id ]]</td><td>[[ d.deadline ]]</td>
+                                <td><span class="badge" :class="d.status==='approved'?'bg-success':d.status==='rejected'?'bg-danger':'bg-warning text-dark'">[[ d.status ]]</span></td>
+                                <td>
+                                    <button v-if="d.status==='pending'" class="btn btn-success btn-sm me-1" @click="approveDrive(d.id,'approved')">Approve</button>
+                                    <button v-if="d.status==='pending'" class="btn btn-danger btn-sm" @click="approveDrive(d.id,'rejected')">Reject</button>
+                                </td>
+                            </tr>
+                            <tr v-if="drives.length===0"><td colspan="5" class="text-center text-secondary">No drives yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="at==='applications'">
+                    <h4 class="mb-3">All Applications</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>ID</th><th>Student ID</th><th>Drive ID</th><th>Applied At</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr v-for="a in applications" :key="a.id">
+                                <td>#[[ a.id ]]</td><td>[[ a.student_id ]]</td><td>[[ a.drive_id ]]</td><td>[[ a.applied_at ]]</td>
+                                <td><span class="badge bg-primary">[[ a.status ]]</span></td>
+                            </tr>
+                            <tr v-if="applications.length===0"><td colspan="5" class="text-center text-secondary">No applications yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="at==='search'">
+                    <h4 class="mb-3">Search</h4>
+                    <div class="d-flex gap-2 mb-3">
+                        <input class="form-control" v-model="sq" placeholder="Search by name..." style="max-width:300px">
+                        <select class="form-select" v-model="st" style="max-width:150px">
+                            <option value="student">Students</option>
+                            <option value="company">Companies</option>
+                        </select>
+                        <button class="btn btn-light" @click="search">Search</button>
+                    </div>
+                    <table class="table table-bordered" v-if="sr.length>0">
+                        <thead><tr><th>ID</th><th>Name</th><th>Details</th></tr></thead>
+                        <tbody>
+                            <tr v-for="r in sr" :key="r.id">
+                                <td>#[[ r.id ]]</td><td>[[ r.name ]]</td><td>[[ r.branch||r.industry ]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--company dashboard -->
+    <div v-if="page==='company'" class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action" :class="{active: ct==='dashboard'}" @click="ct='dashboard'">Overview</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: ct==='drives'}" @click="ct='drives'; loadMyDrives()">My Drives</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: ct==='create'}" @click="ct='create'">Create Drive</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: ct==='applications'}" @click="ct='applications'; loadMyApplications()">Applications</button>
+                </div>
+            </div>
+            <div class="col-md-10">
+
+                <div v-if="ct==='dashboard'">
+                    <h4 class="mb-3">Overview</h4>
+                    <div class="card p-3 mb-3" style="max-width:400px" v-if="myCompany">
+                        <p><strong>Company:</strong> [[ myCompany.name ]]</p>
+                        <p><strong>Industry:</strong> [[ myCompany.industry ]]</p>
+                        <p><strong>Website:</strong> [[ myCompany.website ]]</p>
+                        <p class="mb-0"><strong>Status:</strong>
+                            <span class="badge ms-1" :class="myCompany.approval_status==='approved'?'bg-success':'bg-warning text-dark'">[[ myCompany.approval_status ]]</span>
+                        </p>
+                    </div>
+                    <div class="alert alert-warning" style="max-width:400px" v-if="myCompany && myCompany.approval_status!=='approved'">
+                        Pending admin approval. You cannot post drives yet.
+                    </div>
+                </div>
+
+                <div v-if="ct==='drives'">
+                    <h4 class="mb-3">My Drives</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Title</th><th>Deadline</th><th>Min CGPA</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr v-for="d in myDrives" :key="d.id">
+                                <td>[[ d.title ]]</td><td>[[ d.deadline ]]</td><td>[[ d.eligible_cgpa ]]</td>
+                                <td><span class="badge" :class="d.status==='approved'?'bg-success':d.status==='rejected'?'bg-danger':'bg-warning text-dark'">[[ d.status ]]</span></td>
+                            </tr>
+                            <tr v-if="myDrives.length===0"><td colspan="4" class="text-center text-secondary">No drives yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="ct==='create'">
+                    <h4 class="mb-3">Create Drive</h4>
+                    <div v-if="driveErr" class="alert alert-danger">[[ driveErr ]]</div>
+                    <div v-if="driveOk" class="alert alert-success">[[ driveOk ]]</div>
+                    <div style="max-width:500px">
+                        <div class="mb-2"><label class="form-label">Job Title</label><input class="form-control" v-model="df.title"></div>
+                        <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" v-model="df.description" rows="3"></textarea></div>
+                        <div class="row">
+                            <div class="col mb-2"><label class="form-label">Eligible Branch</label><input class="form-control" v-model="df.eligible_branch"></div>
+                            <div class="col mb-2"><label class="form-label">Min CGPA</label><input type="number" class="form-control" v-model="df.eligible_cgpa" step="0.1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col mb-2"><label class="form-label">Eligible Year</label><input type="number" class="form-control" v-model="df.eligible_year"></div>
+                            <div class="col mb-2"><label class="form-label">Deadline</label><input type="date" class="form-control" v-model="df.deadline"></div>
+                        </div>
+                        <button class="btn btn-light w-100 mt-2" @click="createDrive">Post Drive</button>
+                    </div>
+                </div>
+
+                <div v-if="ct==='applications'">
+                    <h4 class="mb-3">Received Applications</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>ID</th><th>Student ID</th><th>Drive ID</th><th>Applied At</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr v-for="a in myApplications" :key="a.id">
+                                <td>#[[ a.id ]]</td><td>[[ a.student_id ]]</td><td>[[ a.drive_id ]]</td><td>[[ a.applied_at ]]</td>
+                                <td><span class="badge bg-primary">[[ a.status ]]</span></td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1" @click="updateAppStatus(a.id,'shortlisted')">Shortlist</button>
+                                    <button class="btn btn-danger btn-sm" @click="updateAppStatus(a.id,'rejected')">Reject</button>
+                                </td>
+                            </tr>
+                            <tr v-if="myApplications.length===0"><td colspan="6" class="text-center text-secondary">No applications yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--student dashboard-->
+    <div v-if="page==='student'" class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action" :class="{active: stt==='drives'}" @click="stt='drives'; loadApprovedDrives()">Browse Drives</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: stt==='applications'}" @click="stt='applications'; loadMyStudentApps()">My Applications</button>
+                    <button class="list-group-item list-group-item-action" :class="{active: stt==='profile'}" @click="stt='profile'">Profile</button>
+                </div>
+            </div>
+            <div class="col-md-10">
+
+                <div v-if="stt==='drives'">
+                    <h4 class="mb-3">Available Drives</h4>
+                    <div v-if="applyErr" class="alert alert-danger">[[ applyErr ]]</div>
+                    <div v-if="applyOk" class="alert alert-success">[[ applyOk ]]</div>
+                    <input class="form-control mb-3" v-model="dsearch" placeholder="Search drives..." @input="filterDrives" style="max-width:300px">
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Title</th><th>Description</th><th>Deadline</th><th>Min CGPA</th><th>Branch</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr v-for="d in filteredDrives" :key="d.id">
+                                <td>[[ d.title ]]</td><td>[[ d.description ]]</td><td>[[ d.deadline ]]</td><td>[[ d.eligible_cgpa ]]</td><td>[[ d.eligible_branch ]]</td>
+                                <td><button class="btn btn-light btn-sm" @click="applyDrive(d.id)">Apply</button></td>
+                            </tr>
+                            <tr v-if="filteredDrives.length===0"><td colspan="6" class="text-center text-secondary">No drives available</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="stt==='applications'">
+                    <h4 class="mb-3">My Applications</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>ID</th><th>Drive ID</th><th>Applied At</th><th>Interview Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr v-for="a in myStudentApps" :key="a.id">
+                                <td>#[[ a.id ]]</td><td>[[ a.drive_id ]]</td><td>[[ a.applied_at ]]</td><td>[[ a.interview_date||'—' ]]</td>
+                                <td><span class="badge bg-primary">[[ a.status ]]</span></td>
+                            </tr>
+                            <tr v-if="myStudentApps.length===0"><td colspan="5" class="text-center text-secondary">No applications yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="stt==='profile'">
+                    <h4 class="mb-3">My Profile</h4>
+                    <div class="card p-3" style="max-width:400px" v-if="myProfile">
+                        <p><strong>Name:</strong> [[ myProfile.name ]]</p>
+                        <p><strong>Branch:</strong> [[ myProfile.branch ]]</p>
+                        <p><strong>CGPA:</strong> [[ myProfile.cgpa ]]</p>
+                        <p><strong>Year:</strong> [[ myProfile.year ]]</p>
+                        <p class="mb-0"><strong>Skills:</strong> [[ myProfile.skills ]]</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/auth.js"></script>
+<script src="/static/js/admin.js"></script>
+<script src="/static/js/company.js"></script>
+<script src="/static/js/student.js"></script>
+<script>
+const { createApp } = Vue;
+createApp({
+    delimiters: ['[[', ']]'],
+    data() {
+        return {
+            page: 'login', currentUser: null, loading: false,
+            tab: 'login', msg: '', msgOk: false,
+            lf: { email: '', password: '' },
+            sf: { name: '', email: '', password: '', branch: '', cgpa: '', year: '', skills: '' },
+            cf: { name: '', email: '', password: '', industry: '', website: '', hr_contact: '' },
+            at: 'dashboard', stats: {}, companies: [], students: [], drives: [], applications: [],
+            sq: '', st: 'student', sr: [],
+            ct: 'dashboard', myCompany: null, myDrives: [], myApplications: [],
+            df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' },
+            driveErr: '', driveOk: '',
+            stt: 'drives', approvedDrives: [], filteredDrives: [], dsearch: '',
+            myStudentApps: [], myProfile: null, applyErr: '', applyOk: '',
+        }
+    },
+    methods: {
+        ...authMethods,
+        ...adminMethods,
+        ...companyMethods,
+        ...studentMethods,
+    },
+    async mounted() {
+        await this.checkSession();
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

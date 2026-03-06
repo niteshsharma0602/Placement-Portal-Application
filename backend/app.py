@@ -1,8 +1,11 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_security import Security, SQLAlchemyUserDatastore
+from flask_security.utils import hash_password
 from config import Config
 from models import db, User, Role
 from routes.auth import init_auth_routes
+from routes.admin import init_admin_routes
+from routes.company import init_company_routes
 
 def create_app():
     app = Flask(__name__)
@@ -25,12 +28,18 @@ def create_app():
             admin_role = user_datastore.find_or_create_role('admin')     #create admin role 
             user_datastore.create_user(
                 email='admin@123.com', 
-                password='admin123',                      #creating admin user with the admin role
+                password=hash_password('admin123'),                      #creating admin user with the admin role
                 fs_uniquifier='admin-unique-id', 
                 roles=[admin_role]) 
             db.session.commit()
 
     init_auth_routes(app,user_datastore)
+    init_admin_routes(app)
+    init_company_routes(app)
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
     return app
 

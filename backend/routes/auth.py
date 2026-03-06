@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from flask_security import SQLAlchemyUserDatastore
+from flask_security.utils import hash_password
 from models import db, User, Role, Student, Company
 import uuid
 
@@ -15,7 +16,7 @@ def init_auth_routes(app,user_datastore):
         student_role = user_datastore.find_role('student')
         new_user = user_datastore.create_user(
             email=data['email'],
-            password=data['password'],
+            password=hash_password(data['password']),
             fs_uniquifier=str(uuid.uuid4()),
             roles=[student_role]
         )
@@ -47,7 +48,7 @@ def init_auth_routes(app,user_datastore):
         company_role = user_datastore.find_role('company')
         new_user = user_datastore.create_user(
             email=data['email'],
-            password=data['password'],
+            password=hash_password(data['password']),
             fs_uniquifier=str(uuid.uuid4()),
             roles=[company_role]
         )
@@ -71,19 +72,19 @@ def init_auth_routes(app,user_datastore):
     @app.route('/api/login', methods=['POST'])
     def login():
         data = request.get_json()
-        
         user = User.query.filter_by(email=data['email']).first()
-        
-        # Check if user exists and password is correct
         if not user or not user.verify_and_update_password(data['password']):
             return jsonify({'message': 'Invalid email or password'}), 401
-        
-        # Check if user is active
         if not user.active:
             return jsonify({'message': 'Account is deactivated'}), 403
         
         role = user.roles[0].name if user.roles else None
         
+        # set flask session
+        session['user_id'] = user.id
+        session['role'] = role
+        session['email'] = user.email
+
         return jsonify({
             'message': 'Login successful',
             'role': role,
@@ -92,8 +93,18 @@ def init_auth_routes(app,user_datastore):
         }), 200
 
 
-    # Logout
+    @app.route('/api/verify', methods=['GET'])
+    def verify():
+        if 'user_id' in session:
+            return jsonify({
+                'valid': True,
+                'user_id': session['user_id'],
+                'role': session['role'],
+                'email': session['email']
+            }), 200
+        return jsonify({'valid': False}), 401
+
     @app.route('/api/logout', methods=['POST'])
     def logout():
+        session.clear()
         return jsonify({'message': 'Logged out successfully'}), 200
-

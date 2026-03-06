@@ -35,7 +35,7 @@ class Company(db.Model):
     name = db.Column(db.String(255), nullable=False)
     industry = db.Column(db.String(255))
     website = db.Column(db.String(255))
-    hr_contact = db.Column(db.String(255))
+    hr_contact = db.Column(db.String(255) , unique=True)
     approval_status = db.Column(db.String(20), default='pending')
     is_blacklisted = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
