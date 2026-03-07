@@ -35,7 +35,7 @@ def init_company_routes(app):
             'eligible_branch': d.eligible_branch,
             'eligible_cgpa': d.eligible_cgpa,
             'eligible_year': d.eligible_year,
-            'deadline': str(d.deadline) if d.deadline else None,
+            'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None,
             'status': d.status 
         } for d in drives]), 200
 
@@ -62,7 +62,7 @@ def init_company_routes(app):
             eligible_branch=data.get('eligible_branch'),
             eligible_cgpa=data.get('eligible_cgpa'),
             eligible_year=data.get('eligible_year'),
-            deadline=datetime.strptime(data['deadline'], '%Y-%m-%d') if data.get('deadline') else None,
+            deadline=datetime.strptime(data['deadline'], '%Y-%m-%d').date() if data.get('deadline') else None,
             status='pending' 
         )
 

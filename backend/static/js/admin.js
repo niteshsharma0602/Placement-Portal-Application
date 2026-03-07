@@ -1,5 +1,3 @@
-// ── ADMIN METHODS ──
-
 const adminMethods = {
     async loadStats() {
         this.stats = await (await fetch('/api/admin/dashboard')).json();

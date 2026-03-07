@@ -4,7 +4,7 @@ from flask_security.utils import hash_password
 from models import db, User, Role, Student, Company
 import uuid
 
-def init_auth_routes(app,user_datastore):
+def init_auth_routes(app, user_datastore, session_version):
 
     @app.route('/api/register/student' , methods = ['POST'])
     def register_student():
@@ -84,6 +84,7 @@ def init_auth_routes(app,user_datastore):
         session['user_id'] = user.id
         session['role'] = role
         session['email'] = user.email
+        session['version'] = session_version  # Track session version to invalidate on app restart
 
         return jsonify({
             'message': 'Login successful',
@@ -95,7 +96,13 @@ def init_auth_routes(app,user_datastore):
 
     @app.route('/api/verify', methods=['GET'])
     def verify():
+        # Check if session exists and version matches current app version
         if 'user_id' in session:
+            # Invalidate session if version doesn't match (app was restarted)
+            if session.get('version') != session_version:
+                session.clear()
+                return jsonify({'valid': False}), 401
+            
             return jsonify({
                 'valid': True,
                 'user_id': session['user_id'],
