@@ -6,6 +6,7 @@ from models import db, User, Role
 from routes.auth import init_auth_routes
 from routes.admin import init_admin_routes
 from routes.company import init_company_routes
+from routes.student import init_student_routes
 import uuid
 from datetime import datetime
 
@@ -41,6 +42,7 @@ def create_app():
     init_auth_routes(app, user_datastore, app.session_version)
     init_admin_routes(app)
     init_company_routes(app)
+    init_student_routes(app)
 
     @app.route('/')
     def index():
