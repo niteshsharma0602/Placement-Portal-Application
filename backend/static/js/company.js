@@ -1,6 +1,3 @@
-// ── COMPANY METHODS
-
-
 const companyMethods = {
     async loadMyCompany(userId) {
         const res = await fetch(`/api/company/profile/${userId}`);
@@ -15,6 +12,11 @@ const companyMethods = {
         if (!this.myCompany) return;
         const res = await fetch(`/api/company/applications/${this.myCompany.id}`);
         if (res.ok) this.myApplications = await res.json();
+    },
+    async loadCompanyPlacements() {
+        if (!this.myCompany) return;
+        const res = await fetch(`/api/company/placements/${this.myCompany.id}`);
+        if (res.ok) this.myPlacements = await res.json();
     },
     async createDrive() {
         this.driveErr = ''; this.driveOk = '';
@@ -37,6 +39,21 @@ const companyMethods = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
+        this.loadMyApplications();
+    },
+    
+    async scheduleInterview(appId) {
+        const date = this.interviewDates[appId];
+        if (!date) {
+            alert('Please pick an interview date first.');
+            return;
+        }
+        await fetch(`/api/company/application/${appId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'interview', interview_date: date })
+        });
+        this.interviewDates[appId] = '';
         this.loadMyApplications();
     }
 };

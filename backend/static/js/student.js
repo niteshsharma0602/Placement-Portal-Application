@@ -30,5 +30,11 @@ const studentMethods = {
         if (!this.myProfile) return;
         const res = await fetch(`/api/student/applications/${this.myProfile.id}`);
         if (res.ok) this.myStudentApps = await res.json();
+    },
+    // Load placement history — drives where student got selected
+    async loadStudentPlacements() {
+        if (!this.myProfile) return;
+        const res = await fetch(`/api/student/placements/${this.myProfile.id}`);
+        if (res.ok) this.myStudentPlacements = await res.json();
     }
 };

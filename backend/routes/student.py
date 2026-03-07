@@ -94,3 +94,15 @@ def init_student_routes(app):
             'interview_date': a.interview_date.strftime('%Y-%m-%d') if a.interview_date else None,
             'status': a.status
         } for a in applications]), 200
+
+    @app.route('/api/student/placements/<int:student_id>', methods=['GET'])
+    def get_student_placements(student_id):
+        placements = Placement.query.filter_by(student_id=student_id).all()
+        return jsonify([{
+            'id': p.id,
+            'company_id': p.company_id,
+            'drive_id': p.drive_id,
+            'salary': p.salary,
+            'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
+            'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
+        } for p in placements]), 200
