@@ -277,16 +277,11 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <!-- Shortlist button — shown for applied status -->
                                     <button v-if="a.status==='applied'" class="btn btn-info btn-sm me-1" @click="updateAppStatus(a.id,'shortlisted')">Shortlist</button>
-
-                                    <!-- Schedule Interview — shown for shortlisted -->
                                     <span v-if="a.status==='shortlisted'" class="d-flex gap-1">
                                         <input type="date" class="form-control form-control-sm" v-model="interviewDates[a.id]" style="max-width:140px">
                                         <button class="btn btn-warning btn-sm" @click="scheduleInterview(a.id)">Interview</button>
                                     </span>
-
-                                    <!-- Select or Reject — shown for interview status -->
                                     <span v-if="a.status==='interview'" class="d-flex gap-1">
                                         <button class="btn btn-success btn-sm" @click="updateAppStatus(a.id,'selected')">Select</button>
                                         <button class="btn btn-danger btn-sm" @click="updateAppStatus(a.id,'rejected')">Reject</button>
@@ -349,8 +344,13 @@
                     </table>
                 </div>
 
+                <!-- My Applications with Export button -->
                 <div v-if="stt==='applications'">
-                    <h4 class="mb-3">My Applications</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">My Applications</h4>
+                        <button class="btn btn-outline-light btn-sm" @click="exportCSV">Export as CSV</button>
+                    </div>
+                    <div v-if="exportMsg" class="alert alert-info">[[ exportMsg ]]</div>
                     <table class="table table-bordered table-hover">
                         <thead><tr><th>ID</th><th>Drive ID</th><th>Applied At</th><th>Interview Date</th><th>Status</th></tr></thead>
                         <tbody>
@@ -427,12 +427,13 @@ createApp({
             ct: 'dashboard', myCompany: null, myDrives: [], myApplications: [], myPlacements: [],
             df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' },
             driveErr: '', driveOk: '',
-            interviewDates: {},   // stores interview date input per application id
+            interviewDates: {},
 
             // student data
             stt: 'drives', approvedDrives: [], filteredDrives: [], dsearch: '',
             myStudentApps: [], myProfile: null, applyErr: '', applyOk: '',
             myStudentPlacements: [],
+            exportMsg: '',
         }
     },
     methods: {

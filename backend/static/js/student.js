@@ -36,5 +36,11 @@ const studentMethods = {
         if (!this.myProfile) return;
         const res = await fetch(`/api/student/placements/${this.myProfile.id}`);
         if (res.ok) this.myStudentPlacements = await res.json();
-    }
+    },
+
+    async exportCSV() {
+        const res = await fetch(`/api/student/export/${this.myProfile.id}`, { method: 'POST' });
+        const data = await res.json();
+        this.exportMsg = data.message;
+    },
 };

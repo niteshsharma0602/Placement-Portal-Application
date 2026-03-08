@@ -106,3 +106,22 @@ def init_student_routes(app):
             'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
             'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
         } for p in placements]), 200
+    
+    # ─────────────────────────────────────────
+    # TRIGGER CSV EXPORT (Async via Celery)
+    # Student clicks Export button → Celery job runs
+    # in background → student gets email when done
+    # ─────────────────────────────────────────
+    @app.route('/api/student/export/<int:student_id>', methods=['POST'])
+    def trigger_csv_export(student_id):
+        from tasks import export_applications_csv
+
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({'message': 'Student not found'}), 404
+
+        # Queue the task — runs asynchronously in Celery worker
+        export_applications_csv.delay(student_id)
+
+        return jsonify({'message': 'Export started! You will receive an email when it is ready.'}), 202
+

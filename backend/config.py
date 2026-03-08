@@ -1,8 +1,10 @@
 import os
 from datetime import timedelta
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'I-am-vengeance2'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///placement_portal.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, '..', 'instance', 'placement_portal.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECURITY_PASSWORD_SALT = "devil-of-hell's-kitchen"
     SECURITY_REGISTERABLE = True
