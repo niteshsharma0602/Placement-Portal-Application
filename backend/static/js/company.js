@@ -33,6 +33,12 @@ const companyMethods = {
             this.driveErr = data.message;
         }
     },
+
+    async closeDrive(driveId) {
+        await fetch(`/api/company/drive/${driveId}/close`, { method: 'PUT' });
+        this.loadMyDrives();
+    },
+
     async updateAppStatus(appId, status) {
         await fetch(`/api/company/application/${appId}/status`, {
             method: 'PUT',
@@ -55,5 +61,11 @@ const companyMethods = {
         });
         this.interviewDates[appId] = '';
         this.loadMyApplications();
-    }
+    },
+
+    async exportCompanyCSV() {
+        const res = await fetch(`/api/company/export/${this.myCompany.id}`, { method: 'POST' });
+        const data = await res.json();
+        this.exportCompanyMsg = data.message;
+    },
 };

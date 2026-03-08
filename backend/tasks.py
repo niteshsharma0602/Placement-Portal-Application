@@ -61,54 +61,51 @@ def get_flask_app():
 @celery.task(name='tasks.send_interview_reminders')
 def send_interview_reminders():
     app, mail = get_flask_app()
-
     with app.app_context():
-        from models import Application, Student, PlacementDrive, User
-
-        today = datetime.now(IST).date()
-        reminder_window = today + timedelta(days=2)
-
-        applications = Application.query.filter(
-            Application.status == 'interview',
-            Application.interview_date != None
+        from models import Student, PlacementDrive, Application, User
+        from datetime import datetime, timedelta, timezone
+        
+        IST = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(IST)
+        upcoming = now + timedelta(days=2)
+        
+        # find drives with deadlines in next 2 days
+        drives = PlacementDrive.query.filter(
+            PlacementDrive.status == 'approved',
+            PlacementDrive.deadline >= now,
+            PlacementDrive.deadline <= upcoming
         ).all()
+        
+        count = 0
+        for drive in drives:
+            # find students who have NOT applied yet
+            applied_student_ids = [a.student_id for a in drive.applications]
+            students = Student.query.filter(
+                Student.is_blacklisted == False
+            ).all()
+            
+            for student in students:
+                if student.id not in applied_student_ids:
+                    user = User.query.get(student.user_id)
+                    if user:
+                        msg = Message(
+                            subject=f'Deadline Reminder: {drive.title}',
+                            sender='noreply@placementportal.com',
+                            recipients=[user.email]
+                        )
+                        msg.body = f'''Hi {student.name},
 
-        sent_count = 0
-        for app_record in applications:
-            if not app_record.interview_date:
-                continue
+This is a reminder that the application deadline for {drive.title} is approaching.
 
-            interview_date = app_record.interview_date.date() if hasattr(app_record.interview_date, 'date') else app_record.interview_date
+Deadline: {drive.deadline.strftime('%Y-%m-%d')}
 
-            if today <= interview_date <= reminder_window:
-                student = Student.query.get(app_record.student_id)
-                user = User.query.get(student.user_id)
-                drive = PlacementDrive.query.get(app_record.drive_id)
+Login to the Placement Portal to apply before the deadline.
 
-                msg = Message(
-                    subject='Interview Reminder — Placement Portal',
-                    recipients=[user.email],
-                    body=f"""
-Dear {student.name},
-
-This is a reminder that you have an interview scheduled.
-
-Drive: {drive.title}
-Interview Date: {interview_date}
-
-Please be prepared and report on time.
-
-Best regards,
-Placement Portal Team
-                    """.strip()
-                )
-
-                mail.send(msg)
-                sent_count += 1
-                print(f'[Reminder] Sent to {user.email} for drive: {drive.title}')
-
-        print(f'[Reminder] Total reminders sent: {sent_count}')
-        return f'Sent {sent_count} reminders'
+Placement Portal Team'''
+                        mail.send(msg)
+                        count += 1
+        
+        print(f'[Reminder] Deadline reminders sent: {count}')
 
 
 # Generates an HTML report of the past month's placement activity and emails it to admin
@@ -238,3 +235,52 @@ Placement Portal Team
 
         print(f'[CSV Export] Export ready for student {student_id}: {filename}')
         return f'CSV exported: {filename}'
+
+@celery.task(name='tasks.export_company_csv')
+def export_company_csv(company_id):
+    app, mail = get_flask_app()
+    with app.app_context():
+        from models import Company, PlacementDrive, Application, Student, User
+        import csv, os
+
+        company = Company.query.get(company_id)
+        if not company:
+            return
+
+        drives = PlacementDrive.query.filter_by(company_id=company_id).all()
+        drive_ids = [d.id for d in drives]
+        applications = Application.query.filter(Application.drive_id.in_(drive_ids)).all()
+
+        export_dir = os.path.join(os.path.dirname(__file__), 'static', 'exports')
+        os.makedirs(export_dir, exist_ok=True)
+        filename = f'company_{company_id}_applications.csv'
+        filepath = os.path.join(export_dir, filename)
+
+        with open(filepath, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Student Name', 'Drive Title', 'Applied At', 'Interview Date', 'Status'])
+            for a in applications:
+                student = Student.query.get(a.student_id)
+                drive = PlacementDrive.query.get(a.drive_id)
+                writer.writerow([
+                    student.name if student else 'N/A',
+                    drive.title if drive else 'N/A',
+                    a.applied_at.strftime('%Y-%m-%d') if a.applied_at else '',
+                    a.interview_date.strftime('%Y-%m-%d') if a.interview_date else '',
+                    a.status
+                ])
+
+        user = User.query.get(company.user_id)
+        if user:
+            msg = Message(
+                subject='Your Applications Export is Ready',
+                sender='noreply@placementportal.com',
+                recipients=[user.email]
+            )
+            msg.body = f'''Hi {company.name},
+
+Your applications export is ready. Download it from:
+http://localhost:5000/static/exports/{filename}
+
+Placement Portal Team'''
+            mail.send(msg)

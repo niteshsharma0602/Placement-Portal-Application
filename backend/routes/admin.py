@@ -9,11 +9,13 @@ def init_admin_routes(app):
         total_students = Student.query.count()
         total_companies = Company.query.count()
         total_drives = PlacementDrive.query.count()
+        total_applications = Application.query.count()
         
         return jsonify({
             'total_students': total_students,
             'total_companies': total_companies,
-            'total_drives': total_drives
+            'total_drives': total_drives,
+            'total_applications': total_applications
         }), 200
     
     @app.route('/api/admin/students', methods=['GET'])
@@ -21,14 +23,17 @@ def init_admin_routes(app):
         students = Student.query.all()
         result = []
         for student in students:  
+            user = User.query.get(student.user_id)
             result.append({
                 'id': student.id,
                 'name': student.name,
+                'email': user.email,
                 'branch': student.branch,
                 'cgpa': student.cgpa,
                 'year': student.year,
                 'skills': student.skills,
-                'is_blacklisted': student.is_blacklisted
+                'is_blacklisted': student.is_blacklisted,
+                'active': user.active if user else True
             })
         return jsonify(result), 200
 
@@ -44,7 +49,8 @@ def init_admin_routes(app):
                 'website': company.website,
                 'hr_contact': company.hr_contact,
                 'approval_status': company.approval_status,
-                'is_blacklisted': company.is_blacklisted
+                'is_blacklisted': company.is_blacklisted,
+                'active': User.query.get(company.user_id).active
             })
         return jsonify(result), 200
     
@@ -68,7 +74,14 @@ def init_admin_routes(app):
         company = Company.query.get(company_id)
         if not company:
             return jsonify({'message': 'Company not found'}), 404
-        status = request.get_json().get('status')  # 'approved' or 'rejected'
+        status = request.get_json().get('status')
+        if status == 'rejected':
+            user = User.query.get(company.user_id)
+            db.session.delete(company)
+            if user:
+                db.session.delete(user)
+            db.session.commit()
+            return jsonify({'message': 'Company rejected and removed'}), 200
         company.approval_status = status
         db.session.commit()
         return jsonify({'message': f'Company {status} successfully'}), 200
@@ -108,22 +121,54 @@ def init_admin_routes(app):
     @app.route('/api/admin/drives', methods=['GET'])
     def get_all_drives():
         drives = PlacementDrive.query.all()
-        return jsonify([{
-            'id': d.id,
-            'title': d.title,
-            'company_id': d.company_id,
-            'status': d.status,
-            'deadline': str(d.deadline)
-        } for d in drives]), 200
+        result = []
+        for d in drives:
+            company = Company.query.get(d.company_id)
+            result.append({
+                'id': d.id,
+                'title': d.title,
+                'company_id': d.company_id,
+                'company_name': company.name if company else 'N/A',
+                'status': d.status,
+                'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None
+            })
+        return jsonify(result), 200
 
     # View all applications
     @app.route('/api/admin/applications', methods=['GET'])
     def get_all_applications():
         applications = Application.query.all()
-        return jsonify([{
-            'id': a.id,
-            'student_id': a.student_id,
-            'drive_id': a.drive_id,
-            'status': a.status,
-            'applied_at': str(a.applied_at)
-        } for a in applications]), 200
+        result = []
+        for a in applications:
+            student = Student.query.get(a.student_id)
+            drive = PlacementDrive.query.get(a.drive_id)
+            result.append({
+                'id': a.id,
+                'student_name': student.name if student else 'N/A',
+                'drive_title': drive.title if drive else 'N/A',
+                'status': a.status,
+                'applied_at': a.applied_at.strftime('%Y-%m-%d') if a.applied_at else None
+            })
+        return jsonify(result), 200
+
+    @app.route('/api/admin/student/<int:student_id>/deactivate', methods=['PUT'])
+    def deactivate_student(student_id):
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({'message': 'Student not found'}), 404
+        user = User.query.get(student.user_id)
+        if user:
+            user.active = not user.active
+        db.session.commit()
+        return jsonify({'message': 'Student account status updated', 'active': user.active}), 200
+
+    @app.route('/api/admin/company/<int:company_id>/deactivate', methods=['PUT'])
+    def deactivate_company(company_id):
+        company = Company.query.get(company_id)
+        if not company:
+            return jsonify({'message': 'Company not found'}), 404
+        user = User.query.get(company.user_id)
+        if user:
+            user.active = not user.active
+        db.session.commit()
+        return jsonify({'message': 'Company account status updated', 'active': user.active}), 200

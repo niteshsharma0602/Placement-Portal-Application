@@ -18,6 +18,11 @@ const authMethods = {
 
     async registerStudent() {
         this.loading = true; this.msg = '';
+
+        if (!this.sf.name || !this.sf.email || !this.sf.password || !this.sf.branch || !this.sf.cgpa || !this.sf.year || !this.sf.skills) {
+            this.msg = 'All fields are required'; this.msgOk = false; this.loading = false; return;
+        }
+
         const res = await fetch('/api/register/student', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -31,6 +36,11 @@ const authMethods = {
 
     async registerCompany() {
         this.loading = true; this.msg = '';
+
+        if (!this.cf.name || !this.cf.email || !this.cf.password || !this.cf.industry || !this.cf.hr_contact) {
+            this.msg = 'All fields are required'; this.msgOk = false; this.loading = false; return;
+        }
+
         const res = await fetch('/api/register/company', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

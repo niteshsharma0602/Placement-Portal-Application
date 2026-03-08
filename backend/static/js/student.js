@@ -3,6 +3,22 @@ const studentMethods = {
         const res = await fetch(`/api/student/profile/${userId}`);
         if (res.ok) this.myProfile = await res.json();
     },
+
+    async updateProfile() {
+        const res = await fetch(`/api/student/profile/update/${this.myProfile.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.editProfile)
+        });
+        const data = await res.json();
+        this.profileMsg = data.message;
+        this.profileMsgOk = res.ok;
+        if (res.ok) {
+            this.myProfile = { ...this.myProfile, ...this.editProfile };
+            this.showEditProfile = false;
+        }
+    },
+
     async loadApprovedDrives() {
         const res = await fetch('/api/student/drives');
         if (res.ok) {

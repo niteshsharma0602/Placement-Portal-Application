@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from models import db, Company, PlacementDrive, Application, Placement
+from models import db, Company, PlacementDrive, Application, Placement, Student ,User
 from datetime import datetime
 
 def init_company_routes(app):
@@ -31,7 +31,9 @@ def init_company_routes(app):
             'eligible_cgpa': d.eligible_cgpa,
             'eligible_year': d.eligible_year,
             'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None,
-            'status': d.status
+            'status': d.status,
+            'applicant_count': len(d.applications),
+            'salary': d.salary
         } for d in drives]), 200
 
     @app.route('/api/company/drive/create', methods=['POST'])
@@ -53,11 +55,21 @@ def init_company_routes(app):
             eligible_cgpa=data.get('eligible_cgpa'),
             eligible_year=data.get('eligible_year'),
             deadline=datetime.strptime(data['deadline'], '%Y-%m-%d').date() if data.get('deadline') else None,
-            status='pending'
+            status='pending',
+            salary=data.get('salary')
         )
         db.session.add(drive)
         db.session.commit()
         return jsonify({'message': 'Drive created! Waiting for admin approval'}), 201
+    
+    @app.route('/api/company/drive/<int:drive_id>/close', methods=['PUT'])
+    def close_drive(drive_id):
+        drive = PlacementDrive.query.get(drive_id)
+        if not drive:
+            return jsonify({'message': 'Drive not found'}), 404
+        drive.status = 'closed'
+        db.session.commit()
+        return jsonify({'message': 'Drive closed successfully'}), 200
 
 
     @app.route('/api/company/applications/<int:company_id>', methods=['GET'])
@@ -65,14 +77,26 @@ def init_company_routes(app):
         drives = PlacementDrive.query.filter_by(company_id=company_id).all()
         drive_ids = [d.id for d in drives]
         applications = Application.query.filter(Application.drive_id.in_(drive_ids)).all()
-        return jsonify([{
-            'id': a.id,
-            'student_id': a.student_id,
-            'drive_id': a.drive_id,
-            'applied_at': a.applied_at.strftime('%Y-%m-%d') if a.applied_at else None,
-            'interview_date': a.interview_date.strftime('%Y-%m-%d') if a.interview_date else None,
-            'status': a.status
-        } for a in applications]), 200
+        result = []
+        for a in applications:
+            student = Student.query.get(a.student_id)
+            drive = PlacementDrive.query.get(a.drive_id)
+            user = User.query.get(student.user_id) if student else None
+            result.append({
+                'id': a.id,
+                'student_id': a.student_id,
+                'student_name': student.name if student else 'N/A',
+                'student_email': user.email if user else 'N/A',
+                'student_branch': student.branch if student else 'N/A',
+                'student_cgpa': student.cgpa if student else 'N/A',
+                'drive_id': a.drive_id,
+                'drive_title': drive.title if drive else 'N/A',
+                'applied_at': a.applied_at.strftime('%Y-%m-%d') if a.applied_at else None,
+                'interview_date': a.interview_date.strftime('%Y-%m-%d') if a.interview_date else None,
+                'status': a.status,
+                'student_resume': student.resume if student else 'N/A',
+            })
+        return jsonify(result), 200
 
 
     @app.route('/api/company/application/<int:app_id>/status', methods=['PUT'])
@@ -113,11 +137,26 @@ def init_company_routes(app):
     @app.route('/api/company/placements/<int:company_id>', methods=['GET'])
     def get_company_placements(company_id):
         placements = Placement.query.filter_by(company_id=company_id).all()
-        return jsonify([{
-            'id': p.id,
-            'student_id': p.student_id,
-            'drive_id': p.drive_id,
-            'salary': p.salary,
-            'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
-            'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
-        } for p in placements]), 200
+        result = []
+        for p in placements:
+            student = Student.query.get(p.student_id)
+            drive = PlacementDrive.query.get(p.drive_id)
+            user = User.query.get(student.user_id) if student else None
+            result.append({
+                'id': p.id,
+                'student_name': student.name if student else 'N/A',
+                'student_email': user.email if user else 'N/A',
+                'drive_title': drive.title if drive else 'N/A',
+                'salary': drive.salary,
+                'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None
+            })
+        return jsonify(result), 200
+
+    @app.route('/api/company/export/<int:company_id>', methods=['POST'])
+    def trigger_company_export(company_id):
+        from tasks import export_company_csv
+        company = Company.query.get(company_id)
+        if not company:
+            return jsonify({'message': 'Company not found'}), 404
+        export_company_csv.delay(company_id)
+        return jsonify({'message': 'Export started! You will receive an email when ready.'}), 202

@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from models import db, Student, PlacementDrive, Application, Placement
+from models import db, Student, PlacementDrive, Application, Placement,Company
 from datetime import datetime
 
 def init_student_routes(app):
@@ -21,8 +21,25 @@ def init_student_routes(app):
             'year': student.year,
             'skills': student.skills,
             'resume': student.resume,
-            'is_blacklisted': student.is_blacklisted
+            'is_blacklisted': student.is_blacklisted,
         }), 200
+    
+    @app.route('/api/student/profile/update/<int:student_id>', methods=['PUT'])
+    def update_student_profile(student_id):
+        data = request.get_json()
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({'message': 'Student not found'}), 404
+
+        student.name = data.get('name', student.name)
+        student.branch = data.get('branch', student.branch)
+        student.cgpa = data.get('cgpa', student.cgpa)
+        student.year = data.get('year', student.year)
+        student.skills = data.get('skills', student.skills)
+        student.resume = data.get('resume', student.resume)
+        db.session.commit()
+
+        return jsonify({'message': 'Profile updated successfully'}), 200
 
     @app.route('/api/student/drives', methods=['GET'])
     def get_approved_drives():
@@ -33,13 +50,18 @@ def init_student_routes(app):
         return jsonify([{
             'id': d.id,
             'company_id': d.company_id,
+            'company_name': d.company.name,
+            'company_industry': d.company.industry,
+            'company_website': d.company.website,
+            'company_hr_contact': d.company.hr_contact,
             'title': d.title,
             'description': d.description,
             'eligible_branch': d.eligible_branch,
             'eligible_cgpa': d.eligible_cgpa,
             'eligible_year': d.eligible_year,
             'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None,
-            'status': d.status
+            'status': d.status,
+            'salary': d.salary
         } for d in drives]), 200
 
     @app.route('/api/student/apply', methods=['POST'])
@@ -71,6 +93,16 @@ def init_student_routes(app):
         if existing:
             return jsonify({'message': 'You have already applied to this drive'}), 400
 
+        # eligibility check if student meets the criteria
+        if drive.eligible_cgpa and student.cgpa < drive.eligible_cgpa:
+            return jsonify({'message': f'You need minimum CGPA of {drive.eligible_cgpa} to apply'}), 403
+
+        if drive.eligible_branch and drive.eligible_branch.lower() != student.branch.lower():
+            return jsonify({'message': f'This drive is only for {drive.eligible_branch} branch'}), 403
+
+        if drive.eligible_year and drive.eligible_year > student.year:
+            return jsonify({'message': f'You do not have enough experience required'}), 403
+
         # create new application
         application = Application(
             student_id=student_id,
@@ -87,31 +119,39 @@ def init_student_routes(app):
 
         applications = Application.query.filter_by(student_id=student_id).all()
 
-        return jsonify([{
-            'id': a.id,
-            'drive_id': a.drive_id,
-            'applied_at': a.applied_at.strftime('%Y-%m-%d') if a.applied_at else None,
-            'interview_date': a.interview_date.strftime('%Y-%m-%d') if a.interview_date else None,
-            'status': a.status
-        } for a in applications]), 200
+        result = []
+        for a in applications:
+            drive = PlacementDrive.query.get(a.drive_id)
+            company = Company.query.get(drive.company_id) if drive else None
+            result.append({
+                'id': a.id,
+                'drive_id': a.drive_id,
+                'drive_title': drive.title if drive else 'N/A',
+                'company_name': company.name if company else 'N/A',
+                'applied_at': a.applied_at.strftime('%Y-%m-%d') if a.applied_at else None,
+                'interview_date': a.interview_date.strftime('%Y-%m-%d') if a.interview_date else None,
+                'status': a.status
+            })
+        return jsonify(result), 200
 
     @app.route('/api/student/placements/<int:student_id>', methods=['GET'])
     def get_student_placements(student_id):
         placements = Placement.query.filter_by(student_id=student_id).all()
-        return jsonify([{
-            'id': p.id,
-            'company_id': p.company_id,
-            'drive_id': p.drive_id,
-            'salary': p.salary,
-            'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
-            'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
-        } for p in placements]), 200
+        result = []
+        for p in placements:
+            company = Company.query.get(p.company_id)
+            drive = PlacementDrive.query.get(p.drive_id)
+            result.append({
+                'id': p.id,
+                'company_name': company.name if company else 'N/A',
+                'drive_title': drive.title if drive else 'N/A',
+                'salary': drive.salary if drive else None,
+                'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
+                'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
+            })
+        return jsonify(result), 200
     
-    # ─────────────────────────────────────────
-    # TRIGGER CSV EXPORT (Async via Celery)
-    # Student clicks Export button → Celery job runs
-    # in background → student gets email when done
-    # ─────────────────────────────────────────
+    #student gets a csv export of their application history via email
     @app.route('/api/student/export/<int:student_id>', methods=['POST'])
     def trigger_csv_export(student_id):
         from tasks import export_applications_csv

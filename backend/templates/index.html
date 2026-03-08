@@ -44,30 +44,30 @@
 
                         <!-- Student Register -->
                         <div v-if="tab==='student'">
-                            <div class="mb-2"><label class="form-label">Full Name</label><input class="form-control" v-model="sf.name"></div>
-                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="sf.email"></div>
-                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="sf.password"></div>
+                            <div class="mb-2"><label class="form-label">Full Name</label><input class="form-control" v-model="sf.name"  required></div>
+                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="sf.email" required></div>
+                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="sf.password" required></div>
                             <div class="row">
-                                <div class="col mb-2"><label class="form-label">Branch</label><input class="form-control" v-model="sf.branch"></div>
-                                <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="sf.cgpa" step="0.1"></div>
+                                <div class="col mb-2"><label class="form-label">Branch</label><input class="form-control" v-model="sf.branch" required></div>
+                                <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="sf.cgpa" step="0.1" required></div>
                             </div>
                             <div class="row">
-                                <div class="col mb-2"><label class="form-label">Year</label><input type="number" class="form-control" v-model="sf.year"></div>
-                                <div class="col mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="sf.skills"></div>
+                                <div class="col mb-2"><label class="form-label">Experience</label><input type="number" class="form-control" v-model="sf.year" required></div>
+                                <div class="col mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="sf.skills" required></div>
                             </div>
                             <button class="btn btn-light w-100 mt-2" @click="registerStudent" :disabled="loading">[[ loading ? 'Registering...' : 'Register' ]]</button>
                         </div>
 
                         <!-- Company Register -->
                         <div v-if="tab==='company'">
-                            <div class="mb-2"><label class="form-label">Company Name</label><input class="form-control" v-model="cf.name"></div>
-                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="cf.email"></div>
-                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="cf.password"></div>
+                            <div class="mb-2"><label class="form-label">Company Name</label><input class="form-control" v-model="cf.name" required></div>
+                            <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" v-model="cf.email" required></div>
+                            <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" v-model="cf.password" required></div>
                             <div class="row">
-                                <div class="col mb-2"><label class="form-label">Industry</label><input class="form-control" v-model="cf.industry"></div>
-                                <div class="col mb-2"><label class="form-label">HR Contact</label><input class="form-control" v-model="cf.hr_contact"></div>
+                                <div class="col mb-2"><label class="form-label">Industry</label><input class="form-control" v-model="cf.industry" required></div>
+                                <div class="col mb-2"><label class="form-label">HR Contact</label><input class="form-control" v-model="cf.hr_contact" required></div>
                             </div>
-                            <div class="mb-2"><label class="form-label">Website</label><input class="form-control" v-model="cf.website"></div>
+                            <div class="mb-2"><label class="form-label">Website</label><input class="form-control" v-model="cf.website" required></div>
                             <button class="btn btn-light w-100 mt-2" @click="registerCompany" :disabled="loading">[[ loading ? 'Registering...' : 'Register' ]]</button>
                         </div>
 
@@ -95,9 +95,10 @@
                 <div v-if="at==='dashboard'">
                     <h4 class="mb-4">Dashboard</h4>
                     <div class="row g-3">
-                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_students||0 ]]</h2><p class="text-secondary mb-0">Students</p></div></div>
-                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_companies||0 ]]</h2><p class="text-secondary mb-0">Companies</p></div></div>
-                        <div class="col-md-4"><div class="card text-center p-3"><h2>[[ stats.total_drives||0 ]]</h2><p class="text-secondary mb-0">Drives</p></div></div>
+                        <div class="col-md-3"><div class="card text-center p-3"><h2>[[ stats.total_students||0 ]]</h2><p class="text-secondary mb-0">Students</p></div></div>
+                        <div class="col-md-3"><div class="card text-center p-3"><h2>[[ stats.total_companies||0 ]]</h2><p class="text-secondary mb-0">Companies</p></div></div>
+                        <div class="col-md-3"><div class="card text-center p-3"><h2>[[ stats.total_drives||0 ]]</h2><p class="text-secondary mb-0">Drives</p></div></div>
+                        <div class="col-md-3"><div class="card text-center p-3"><h2>[[ stats.total_applications||0 ]]</h2><p class="text-secondary mb-0">Applications</p></div></div>
                     </div>
                 </div>
 
@@ -118,6 +119,7 @@
                                     <button v-if="c.approval_status==='pending'" class="btn btn-success btn-sm me-1" @click="approveCompany(c.id,'approved')">Approve</button>
                                     <button v-if="c.approval_status==='pending'" class="btn btn-danger btn-sm me-1" @click="approveCompany(c.id,'rejected')">Reject</button>
                                     <button class="btn btn-outline-secondary btn-sm" @click="blacklistCompany(c.id,!c.is_blacklisted)">[[ c.is_blacklisted?'Unblock':'Block' ]]</button>
+                                    <button class="btn btn-outline-danger btn-sm" @click="deactivateCompany(c.id)">[[ c.active?'Deactivate':'Activate' ]]</button>
                                 </td>
                             </tr>
                             <tr v-if="companies.length===0"><td colspan="5" class="text-center text-secondary">No companies yet</td></tr>
@@ -128,14 +130,16 @@
                 <div v-if="at==='students'">
                     <h4 class="mb-3">Students</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Name</th><th>Branch</th><th>CGPA</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>CGPA</th><th>Experience</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             <tr v-for="s in students" :key="s.id">
-                                <td>[[ s.name ]]</td><td>[[ s.branch ]]</td><td>[[ s.cgpa ]]</td><td>[[ s.year ]]</td>
+                                <td>[[ s.name ]]</td><td>[[ s.email ]]</td><td>[[ s.branch ]]</td><td>[[ s.cgpa ]]</td><td>[[ s.year ]] yr(s)</td>
                                 <td><span class="badge" :class="s.is_blacklisted?'bg-danger':'bg-success'">[[ s.is_blacklisted?'Blocked':'Active' ]]</span></td>
-                                <td><button class="btn btn-outline-secondary btn-sm" @click="blacklistStudent(s.id,!s.is_blacklisted)">[[ s.is_blacklisted?'Unblock':'Block' ]]</button></td>
+                                <td><button class="btn btn-outline-secondary btn-sm" @click="blacklistStudent(s.id,!s.is_blacklisted)">[[ s.is_blacklisted?'Unblock':'Block' ]]</button>
+                                <button class="btn btn-outline-danger btn-sm" @click="deactivateStudent(s.id)">[[ s.active?'Deactivate':'Activate' ]]</button>
+                                </td>
                             </tr>
-                            <tr v-if="students.length===0"><td colspan="6" class="text-center text-secondary">No students yet</td></tr>
+                            <tr v-if="students.length===0"><td colspan="7" class="text-center text-secondary">No students yet</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -143,10 +147,10 @@
                 <div v-if="at==='drives'">
                     <h4 class="mb-3">Placement Drives</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Title</th><th>Company ID</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Title</th><th>Company</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             <tr v-for="d in drives" :key="d.id">
-                                <td>[[ d.title ]]</td><td>[[ d.company_id ]]</td><td>[[ d.deadline ]]</td>
+                                <td>[[ d.title ]]</td><td>[[ d.company_name ]]</td><td>[[ d.deadline ]]</td>
                                 <td><span class="badge" :class="d.status==='approved'?'bg-success':d.status==='rejected'?'bg-danger':'bg-warning text-dark'">[[ d.status ]]</span></td>
                                 <td>
                                     <button v-if="d.status==='pending'" class="btn btn-success btn-sm me-1" @click="approveDrive(d.id,'approved')">Approve</button>
@@ -161,13 +165,13 @@
                 <div v-if="at==='applications'">
                     <h4 class="mb-3">All Applications</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>ID</th><th>Student ID</th><th>Drive ID</th><th>Applied At</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Student</th><th>Drive</th><th>Applied At</th><th>Status</th></tr></thead>
                         <tbody>
                             <tr v-for="a in applications" :key="a.id">
-                                <td>#[[ a.id ]]</td><td>[[ a.student_id ]]</td><td>[[ a.drive_id ]]</td><td>[[ a.applied_at ]]</td>
+                                <td>[[ a.student_name ]]</td><td>[[ a.drive_title ]]</td><td>[[ a.applied_at ]]</td>
                                 <td><span class="badge bg-primary">[[ a.status ]]</span></td>
                             </tr>
-                            <tr v-if="applications.length===0"><td colspan="5" class="text-center text-secondary">No applications yet</td></tr>
+                            <tr v-if="applications.length===0"><td colspan="4" class="text-center text-secondary">No applications yet</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -229,13 +233,21 @@
                 <div v-if="ct==='drives'">
                     <h4 class="mb-3">My Drives</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Title</th><th>Deadline</th><th>Min CGPA</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Title</th><th>Deadline</th><th>Min CGPA</th><th>Salary (LPA)</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             <tr v-for="d in myDrives" :key="d.id">
-                                <td>[[ d.title ]]</td><td>[[ d.deadline ]]</td><td>[[ d.eligible_cgpa ]]</td>
+                                <td>[[ d.title ]]</td>
+                                <td>[[ d.deadline ]]</td>
+                                <td>[[ d.eligible_cgpa || '—' ]]</td>
+                                <td>[[ d.salary || '—' ]]</td>
+                                <td>[[ d.applicant_count ]]</td>
                                 <td><span class="badge" :class="d.status==='approved'?'bg-success':d.status==='rejected'?'bg-danger':'bg-warning text-dark'">[[ d.status ]]</span></td>
+                                <td>
+                                    <button v-if="d.status==='approved'" class="btn btn-danger btn-sm" @click="closeDrive(d.id)">Close</button>
+                                    <span v-else class="text-secondary small">—</span>
+                                </td>
                             </tr>
-                            <tr v-if="myDrives.length===0"><td colspan="4" class="text-center text-secondary">No drives yet</td></tr>
+                            <tr v-if="myDrives.length===0"><td colspan="7" class="text-center text-secondary">No drives yet</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -255,20 +267,30 @@
                             <div class="col mb-2"><label class="form-label">Eligible Year</label><input type="number" class="form-control" v-model="df.eligible_year"></div>
                             <div class="col mb-2"><label class="form-label">Deadline</label><input type="date" class="form-control" v-model="df.deadline"></div>
                         </div>
+                        <div class="col mb-2"><label class="form-label">Salary (LPA)</label><input type="number" class="form-control" v-model="df.salary" step="0.1"></div>
                         <button class="btn btn-light w-100 mt-2" @click="createDrive">Post Drive</button>
                     </div>
                 </div>
 
                 <!-- Company Applications with Interview + Select buttons -->
                 <div v-if="ct==='applications'">
-                    <h4 class="mb-3">Received Applications</h4>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Received Applications</h4>
+                    <button class="btn btn-outline-light btn-sm" @click="exportCompanyCSV">Export as CSV</button>
+                </div>
+                <div v-if="exportCompanyMsg" class="alert alert-info">[[ exportCompanyMsg ]]</div>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>ID</th><th>Student ID</th><th>Drive ID</th><th>Applied At</th><th>Interview Date</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Student</th><th>Branch</th><th>CGPA</th><th>Drive</th><th>Applied At</th><th>Interview Date</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             <tr v-for="a in myApplications" :key="a.id">
-                                <td>#[[ a.id ]]</td>
-                                <td>[[ a.student_id ]]</td>
-                                <td>[[ a.drive_id ]]</td>
+                                <td>
+                                    [[ a.student_name ]]
+                                    <br>
+                                    <button class="btn btn-outline-secondary btn-sm mt-1" @click="selectedStudent=a">View</button>
+                                </td>
+                                <td>[[ a.student_branch ]]</td>
+                                <td>[[ a.student_cgpa ]]</td>
+                                <td>[[ a.drive_title ]]</td>
                                 <td>[[ a.applied_at ]]</td>
                                 <td>[[ a.interview_date || '—' ]]</td>
                                 <td>
@@ -288,24 +310,36 @@
                                     </span>
                                 </td>
                             </tr>
-                            <tr v-if="myApplications.length===0"><td colspan="7" class="text-center text-secondary">No applications yet</td></tr>
+                            <tr v-if="myApplications.length===0"><td colspan="8" class="text-center text-secondary">No applications yet</td></tr>
                         </tbody>
                     </table>
+
+                    <div class="card p-3 mt-3" style="max-width:400px" v-if="selectedStudent">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">[[ selectedStudent.student_name ]]</h6>
+                            <button class="btn btn-sm btn-outline-secondary" @click="selectedStudent=null">Close</button>
+                        </div> 
+                        <p class="mb-1"><strong>Email:</strong> [[ selectedStudent.student_email || '—' ]]</p>
+                        <p class="mb-1"><strong>Branch:</strong> [[ selectedStudent.student_branch ]]</p>
+                        <p class="mb-1"><strong>CGPA:</strong> [[ selectedStudent.student_cgpa ]]</p>
+                        <p class="mb-0"><strong>Resume:</strong> [[ selectedStudent.student_resume || '—' ]]</p>
+                    </div>
                 </div>
 
                 <!-- Company Placements -->
                 <div v-if="ct==='placements'">
                     <h4 class="mb-3">Placed Students</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Student ID</th><th>Drive ID</th><th>Salary</th><th>Joining Date</th></tr></thead>
+                        <thead><tr><th>Student</th><th>Email</th><th>Drive</th><th>Salary</th><th>Joining Date</th></tr></thead>
                         <tbody>
                             <tr v-for="p in myPlacements" :key="p.id">
-                                <td>[[ p.student_id ]]</td>
-                                <td>[[ p.drive_id ]]</td>
-                                <td>[[ p.salary || '—' ]]</td>
+                                <td>[[ p.student_name ]]</td>
+                                <td>[[ p.student_email ]]</td>
+                                <td>[[ p.drive_title ]]</td>
+                                <td>[[ p.salary || '—' ]] Lpa</td>
                                 <td>[[ p.joining_date || '—' ]]</td>
                             </tr>
-                            <tr v-if="myPlacements.length===0"><td colspan="4" class="text-center text-secondary">No placements yet</td></tr>
+                            <tr v-if="myPlacements.length===0"><td colspan="5" class="text-center text-secondary">No placements yet</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -333,15 +367,33 @@
                     <div v-if="applyOk" class="alert alert-success">[[ applyOk ]]</div>
                     <input class="form-control mb-3" v-model="dsearch" placeholder="Search drives..." @input="filterDrives" style="max-width:300px">
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Title</th><th>Description</th><th>Deadline</th><th>Min CGPA</th><th>Branch</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Company</th><th>Title</th><th>Description</th><th>Deadline</th><th>Min CGPA</th><th>Branch</th><th>Experience</th><th>Salary (LPA)</th><th>Action</th></tr></thead>
                         <tbody>
                             <tr v-for="d in filteredDrives" :key="d.id">
-                                <td>[[ d.title ]]</td><td>[[ d.description ]]</td><td>[[ d.deadline ]]</td><td>[[ d.eligible_cgpa ]]</td><td>[[ d.eligible_branch ]]</td>
-                                <td><button class="btn btn-light btn-sm" @click="applyDrive(d.id)">Apply</button></td>
+                                <td>[[ d.company_name ]]</td>
+                                <td>[[ d.title ]]</td>
+                                <td>[[ d.description ]]</td>
+                                <td>[[ d.deadline ]]</td>
+                                <td>[[ d.eligible_cgpa ]]</td>
+                                <td>[[ d.eligible_branch ]]</td>
+                                <td>[[ d.eligible_year || '—' ]] yr(s)</td>
+                                <td>[[ d.salary || '—' ]]</td>
+                                <td><button class="btn btn-light btn-sm" @click="applyDrive(d.id)">Apply</button>
+                                    <button class="btn btn-outline-secondary btn-sm" @click="selectedDrive=d">View</button>
+                                </td>
                             </tr>
-                            <tr v-if="filteredDrives.length===0"><td colspan="6" class="text-center text-secondary">No drives available</td></tr>
+                            <tr v-if="filteredDrives.length===0"><td colspan="8" class="text-center text-secondary">No drives available</td></tr>
                         </tbody>
                     </table>
+                    <div class="card p-3 mt-3" style="max-width:400px" v-if="selectedDrive">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">[[ selectedDrive.company_name ]]</h6>
+                            <button class="btn btn-sm btn-outline-secondary" @click="selectedDrive=null">Close</button>
+                        </div>
+                        <p class="mb-1"><strong>Industry:</strong> [[ selectedDrive.company_industry ]]</p>
+                        <p class="mb-1"><strong>Website:</strong> [[ selectedDrive.company_website || '—' ]]</p>
+                        <p class="mb-1"><strong>HR Contact:</strong> [[ selectedDrive.company_hr_contact || '—' ]]</p>
+                    </div>
                 </div>
 
                 <!-- My Applications with Export button -->
@@ -352,10 +404,10 @@
                     </div>
                     <div v-if="exportMsg" class="alert alert-info">[[ exportMsg ]]</div>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>ID</th><th>Drive ID</th><th>Applied At</th><th>Interview Date</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Drive Title</th><th>Company</th><th>Applied At</th><th>Interview Date</th><th>Status</th></tr></thead>
                         <tbody>
                             <tr v-for="a in myStudentApps" :key="a.id">
-                                <td>#[[ a.id ]]</td><td>[[ a.drive_id ]]</td><td>[[ a.applied_at ]]</td><td>[[ a.interview_date||'—' ]]</td>
+                                <td>[[ a.drive_title ]]</td><td>[[ a.company_name ]]</td><td>[[ a.applied_at ]]</td><td>[[ a.interview_date||'—' ]]</td>
                                 <td>
                                     <span class="badge" :class="a.status==='selected'?'bg-success':a.status==='rejected'?'bg-danger':a.status==='shortlisted'?'bg-info':a.status==='interview'?'bg-warning text-dark':'bg-primary'">
                                         [[ a.status ]]
@@ -371,27 +423,48 @@
                 <div v-if="stt==='placements'">
                     <h4 class="mb-3">Placement History</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Company ID</th><th>Drive ID</th><th>Salary</th><th>Joining Date</th></tr></thead>
+                        <thead><tr><th>Company</th><th>Drive Title</th><th>Salary</th><th>Joining Date</th></tr></thead>
                         <tbody>
                             <tr v-for="p in myStudentPlacements" :key="p.id">
-                                <td>[[ p.company_id ]]</td>
-                                <td>[[ p.drive_id ]]</td>
-                                <td>[[ p.salary || '—' ]]</td>
+                                <td>[[ p.company_name ]]</td>
+                                <td>[[ p.drive_title ]]</td>
+                                <td>[[ p.salary || '—' ]] Lpa</td>
                                 <td>[[ p.joining_date || '—' ]]</td>
                             </tr>
                             <tr v-if="myStudentPlacements.length===0"><td colspan="4" class="text-center text-secondary">No placements yet</td></tr>
                         </tbody>
                     </table>
+
                 </div>
 
                 <div v-if="stt==='profile'">
                     <h4 class="mb-3">My Profile</h4>
-                    <div class="card p-3" style="max-width:400px" v-if="myProfile">
+                    
+                    <div class="card p-3 mb-3" style="max-width:400px" v-if="myProfile">
                         <p><strong>Name:</strong> [[ myProfile.name ]]</p>
                         <p><strong>Branch:</strong> [[ myProfile.branch ]]</p>
                         <p><strong>CGPA:</strong> [[ myProfile.cgpa ]]</p>
-                        <p><strong>Year:</strong> [[ myProfile.year ]]</p>
-                        <p class="mb-0"><strong>Skills:</strong> [[ myProfile.skills ]]</p>
+                        <p><strong>Experience:</strong> [[ myProfile.year ]] yr(s)</p>
+                        <p><strong>Skills:</strong> [[ myProfile.skills ]]</p>
+                        <p class="mb-0"><strong>Resume:</strong> [[ myProfile.resume || '—' ]]</p>
+                        <button class="btn btn-outline-light btn-sm mt-3" @click="showEditProfile=!showEditProfile; editProfile={...myProfile}">
+                            [[ showEditProfile ? 'Cancel' : 'Edit Profile' ]]
+                        </button>
+                    </div>
+
+                    <!-- Edit form -->
+                    <div class="card p-3" style="max-width:400px" v-if="showEditProfile">
+                        <h6 class="mb-3">Edit Profile</h6>
+                        <div v-if="profileMsg" class="alert" :class="profileMsgOk?'alert-success':'alert-danger'">[[ profileMsg ]]</div>
+                        <div class="mb-2"><label class="form-label">Full Name</label><input class="form-control" v-model="editProfile.name"></div>
+                        <div class="mb-2"><label class="form-label">Branch</label><input class="form-control" v-model="editProfile.branch"></div>
+                        <div class="row">
+                            <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="editProfile.cgpa" step="0.1"></div>
+                            <div class="col mb-2"><label class="form-label">Experience</label><input type="number" class="form-control" v-model="editProfile.year"></div>
+                        </div>
+                        <div class="mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="editProfile.skills"></div>
+                        <div class="mb-2"><label class="form-label">Resume Link</label><input class="form-control" v-model="editProfile.resume" placeholder="Google Drive or LinkedIn link"></div>
+                        <button class="btn btn-light w-100 mt-2" @click="updateProfile">Save Profile</button>
                     </div>
                 </div>
 
@@ -425,7 +498,7 @@ createApp({
 
             // company data
             ct: 'dashboard', myCompany: null, myDrives: [], myApplications: [], myPlacements: [],
-            df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' },
+            df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' , salary: ''},
             driveErr: '', driveOk: '',
             interviewDates: {},
 
@@ -434,6 +507,12 @@ createApp({
             myStudentApps: [], myProfile: null, applyErr: '', applyOk: '',
             myStudentPlacements: [],
             exportMsg: '',
+            profileMsg: '', profileMsgOk: false,
+            selectedDrive: null,
+            showEditProfile: false,
+            editProfile: {},
+            exportCompanyMsg: '',
+            selectedStudent: null,
         }
     },
     methods: {

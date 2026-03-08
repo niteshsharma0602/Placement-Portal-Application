@@ -46,7 +46,18 @@ const adminMethods = {
         });
         this.loadCompanies();
     },
+    
     async search() {
         this.sr = await (await fetch(`/api/admin/search?q=${this.sq}&type=${this.st}`)).json();
-    }
+    },
+
+    async deactivateStudent(id) {
+        await fetch(`/api/admin/student/${id}/deactivate`, { method: 'PUT' });
+        this.loadStudents();
+    },
+    async deactivateCompany(id) {
+        await fetch(`/api/admin/company/${id}/deactivate`, { method: 'PUT' });
+        this.loadCompanies();
+    },
 };
+
