@@ -12,3 +12,6 @@ class Config:
     SECURITY_REDIRECT_BEHAVIOR = 'spa'  
     WTF_CSRF_ENABLED = False 
     SESSION_PERMANENT = False
+    CACHE_TYPE = 'RedisCache'
+    CACHE_REDIS_URL = 'redis://localhost:6379/0'
+    CACHE_DEFAULT_TIMEOUT = 60  

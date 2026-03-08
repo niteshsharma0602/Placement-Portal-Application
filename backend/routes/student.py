@@ -2,7 +2,7 @@ from flask import request, jsonify
 from models import db, Student, PlacementDrive, Application, Placement,Company
 from datetime import datetime
 
-def init_student_routes(app):
+def init_student_routes(app, cache):
 
     @app.route('/api/student/profile/<int:user_id>', methods=['GET'])
     def get_student_profile(user_id):
@@ -42,8 +42,9 @@ def init_student_routes(app):
         return jsonify({'message': 'Profile updated successfully'}), 200
 
     @app.route('/api/student/drives', methods=['GET'])
+    @cache.cached(timeout=60, key_prefix='student_drives')
     def get_approved_drives():
-
+        
         # only fetch drives with status approved
         drives = PlacementDrive.query.filter_by(status='approved').all()
 
@@ -111,6 +112,7 @@ def init_student_routes(app):
         )
         db.session.add(application)
         db.session.commit()
+        cache.delete('student_drives')
 
         return jsonify({'message': 'Application submitted successfully'}), 201
 

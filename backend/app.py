@@ -9,11 +9,15 @@ from routes.company import init_company_routes
 from routes.student import init_student_routes
 import uuid
 from datetime import datetime
+from flask_caching import Cache
+
+cache = Cache()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
+    cache.init_app(app)
     
     # Generate a unique app session version to invalidate old sessions on restart
     app.session_version = str(uuid.uuid4())
@@ -40,9 +44,9 @@ def create_app():
             db.session.commit()
 
     init_auth_routes(app, user_datastore, app.session_version)
-    init_admin_routes(app)
+    init_admin_routes(app, cache)
     init_company_routes(app)
-    init_student_routes(app)
+    init_student_routes(app, cache)
 
     @app.route('/')
     def index():
