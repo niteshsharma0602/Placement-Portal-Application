@@ -7,8 +7,10 @@ def init_company_routes(app):
     @app.route('/api/company/profile/<int:user_id>', methods=['GET'])
     def get_company_profile(user_id):
         company = Company.query.filter_by(user_id=user_id).first()
+
         if not company:
             return jsonify({'message': 'Company not found'}), 404
+        
         return jsonify({
             'id': company.id,
             'user_id': company.user_id,
@@ -29,7 +31,7 @@ def init_company_routes(app):
             'description': d.description,
             'eligible_branch': d.eligible_branch,
             'eligible_cgpa': d.eligible_cgpa,
-            'eligible_year': d.eligible_year,
+            'experience': d.experience,
             'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None,
             'status': d.status,
             'applicant_count': len(d.applications),
@@ -42,8 +44,10 @@ def init_company_routes(app):
         company = Company.query.get(data.get('company_id'))
         if not company:
             return jsonify({'message': 'Company not found'}), 404
+        
         if company.approval_status != 'approved':
             return jsonify({'message': 'Your company is not approved yet'}), 403
+        
         if company.is_blacklisted:
             return jsonify({'message': 'Your company is blacklisted'}), 403
 
@@ -53,7 +57,7 @@ def init_company_routes(app):
             description=data.get('description'),
             eligible_branch=data.get('eligible_branch'),
             eligible_cgpa=data.get('eligible_cgpa'),
-            eligible_year=data.get('eligible_year'),
+            experience=data.get('experience'),
             deadline=datetime.strptime(data['deadline'], '%Y-%m-%d').date() if data.get('deadline') else None,
             status='pending',
             salary=data.get('salary')
@@ -67,6 +71,7 @@ def init_company_routes(app):
         drive = PlacementDrive.query.get(drive_id)
         if not drive:
             return jsonify({'message': 'Drive not found'}), 404
+        
         drive.status = 'closed'
         db.session.commit()
         return jsonify({'message': 'Drive closed successfully'}), 200
@@ -78,6 +83,7 @@ def init_company_routes(app):
         drive_ids = [d.id for d in drives]
         applications = Application.query.filter(Application.drive_id.in_(drive_ids)).all()
         result = []
+
         for a in applications:
             student = Student.query.get(a.student_id)
             drive = PlacementDrive.query.get(a.drive_id)
@@ -113,7 +119,6 @@ def init_company_routes(app):
         if new_status == 'interview' and data.get('interview_date'):
             application.interview_date = datetime.strptime(data['interview_date'], '%Y-%m-%d')
 
-        # if student is selected, create a placement record
         if new_status == 'selected':
             existing_placement = Placement.query.filter_by(
                 student_id=application.student_id,
@@ -126,8 +131,7 @@ def init_company_routes(app):
                     student_id=application.student_id,
                     company_id=drive.company_id,
                     drive_id=application.drive_id,
-                    salary=data.get('salary'),
-                    joining_date=datetime.strptime(data['joining_date'], '%Y-%m-%d') if data.get('joining_date') else None
+                    salary=drive.salary
                 )
                 db.session.add(placement)
 
@@ -138,6 +142,7 @@ def init_company_routes(app):
     def get_company_placements(company_id):
         placements = Placement.query.filter_by(company_id=company_id).all()
         result = []
+
         for p in placements:
             student = Student.query.get(p.student_id)
             drive = PlacementDrive.query.get(p.drive_id)
@@ -147,8 +152,7 @@ def init_company_routes(app):
                 'student_name': student.name if student else 'N/A',
                 'student_email': user.email if user else 'N/A',
                 'drive_title': drive.title if drive else 'N/A',
-                'salary': drive.salary,
-                'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None
+                'salary': drive.salary if drive else None,
             })
         return jsonify(result), 200
 
@@ -156,7 +160,9 @@ def init_company_routes(app):
     def trigger_company_export(company_id):
         from tasks import export_company_csv
         company = Company.query.get(company_id)
+
         if not company:
             return jsonify({'message': 'Company not found'}), 404
+        
         export_company_csv.delay(company_id)
         return jsonify({'message': 'Export started! You will receive an email when ready.'}), 202

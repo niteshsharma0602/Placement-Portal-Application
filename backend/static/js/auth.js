@@ -1,12 +1,14 @@
 const authMethods = {
     async login() {
         this.loading = true; this.msg = '';
+
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(this.lf)
         });
         const data = await res.json();
+
         if (res.ok) {
             this.currentUser = data;
             this.redirectByRole(data.role, data.user_id);
@@ -19,7 +21,7 @@ const authMethods = {
     async registerStudent() {
         this.loading = true; this.msg = '';
 
-        if (!this.sf.name || !this.sf.email || !this.sf.password || !this.sf.branch || !this.sf.cgpa || !this.sf.year || !this.sf.skills) {
+        if (!this.sf.name || !this.sf.email || !this.sf.password || !this.sf.branch || !this.sf.cgpa || !this.sf.experience || !this.sf.skills) {
             this.msg = 'All fields are required'; this.msgOk = false; this.loading = false; return;
         }
 
@@ -48,6 +50,7 @@ const authMethods = {
         });
         const data = await res.json();
         this.msg = data.message; this.msgOk = res.ok;
+
         if (res.ok) this.tab = 'login';
         this.loading = false;
     },
@@ -56,12 +59,15 @@ const authMethods = {
     if (role === 'admin') {
         this.page = 'admin';
         this.loadStats();
+
     } else if (role === 'company') {
         const res = await fetch(`/api/company/profile/${userId}`);
         if (res.ok) { this.myCompany = await res.json(); }  
         this.page = 'company';
+
     } else if (role === 'student') {
         const res = await fetch(`/api/student/profile/${userId}`);
+        
         if (res.ok) { this.myProfile = await res.json(); } 
         this.page = 'student';
         this.loadApprovedDrives();

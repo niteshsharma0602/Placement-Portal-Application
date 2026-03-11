@@ -19,7 +19,6 @@ def create_app():
     db.init_app(app)
     cache.init_app(app)
     
-    # Generate a unique app session version to invalidate old sessions on restart
     app.session_version = str(uuid.uuid4())
     app.session_start_time = datetime.now().isoformat()
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)

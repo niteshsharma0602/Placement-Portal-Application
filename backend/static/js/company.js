@@ -3,21 +3,25 @@ const companyMethods = {
         const res = await fetch(`/api/company/profile/${userId}`);
         if (res.ok) this.myCompany = await res.json();
     },
+
     async loadMyDrives() {
         if (!this.myCompany) return;
         const res = await fetch(`/api/company/drives/${this.myCompany.id}`);
         if (res.ok) this.myDrives = await res.json();
     },
+
     async loadMyApplications() {
         if (!this.myCompany) return;
         const res = await fetch(`/api/company/applications/${this.myCompany.id}`);
         if (res.ok) this.myApplications = await res.json();
     },
+
     async loadCompanyPlacements() {
         if (!this.myCompany) return;
         const res = await fetch(`/api/company/placements/${this.myCompany.id}`);
         if (res.ok) this.myPlacements = await res.json();
     },
+    
     async createDrive() {
         this.driveErr = ''; this.driveOk = '';
         const res = await fetch('/api/company/drive/create', {
@@ -25,10 +29,12 @@ const companyMethods = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...this.df, company_id: this.myCompany.id })
         });
+
         const data = await res.json();
+
         if (res.ok) {
             this.driveOk = data.message;
-            this.df = { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' };
+            this.df = { title: '', description: '', eligible_branch: '', eligible_cgpa: '', experience: '', deadline: '' };
         } else {
             this.driveErr = data.message;
         }
@@ -50,6 +56,7 @@ const companyMethods = {
     
     async scheduleInterview(appId) {
         const date = this.interviewDates[appId];
+
         if (!date) {
             alert('Please pick an interview date first.');
             return;
@@ -59,6 +66,7 @@ const companyMethods = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'interview', interview_date: date })
         });
+        
         this.interviewDates[appId] = '';
         this.loadMyApplications();
     },

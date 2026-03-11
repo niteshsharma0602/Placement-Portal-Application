@@ -27,7 +27,7 @@ def init_auth_routes(app, user_datastore, session_version):
             name=data['name'],
             branch=data.get('branch'),
             cgpa=data.get('cgpa'),
-            year=data.get('year'),
+            experience=data.get('experience'),
             skills=data.get('skills')
         )
         db.session.add(new_student)
@@ -73,11 +73,11 @@ def init_auth_routes(app, user_datastore, session_version):
         
         role = user.roles[0].name if user.roles else None
         
-        # set flask session
+        
         session['user_id'] = user.id
         session['role'] = role
         session['email'] = user.email
-        session['version'] = session_version  # Track session version to invalidate on app restart
+        session['version'] = session_version
 
         return jsonify({
             'message': 'Login successful',
@@ -89,9 +89,9 @@ def init_auth_routes(app, user_datastore, session_version):
 
     @app.route('/api/verify', methods=['GET'])
     def verify():
-        # Check if session exists and version matches current app version
+        
         if 'user_id' in session:
-            # Invalidate session if version doesn't match (app was restarted)
+            
             if session.get('version') != session_version:
                 session.clear()
                 return jsonify({'valid': False}), 401

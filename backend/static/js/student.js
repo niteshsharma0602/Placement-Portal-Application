@@ -1,6 +1,7 @@
 const studentMethods = {
     async loadMyProfile(userId) {
         const res = await fetch(`/api/student/profile/${userId}`);
+
         if (res.ok) this.myProfile = await res.json();
     },
 
@@ -10,6 +11,7 @@ const studentMethods = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(this.editProfile)
         });
+
         const data = await res.json();
         this.profileMsg = data.message;
         this.profileMsgOk = res.ok;
@@ -38,7 +40,9 @@ const studentMethods = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ drive_id: driveId, student_id: this.myProfile.id })
         });
+
         const data = await res.json();
+        
         if (res.ok) { this.applyOk = 'Applied successfully!'; }
         else { this.applyErr = data.message; }
     },
@@ -47,7 +51,7 @@ const studentMethods = {
         const res = await fetch(`/api/student/applications/${this.myProfile.id}`);
         if (res.ok) this.myStudentApps = await res.json();
     },
-    // Load placement history — drives where student got selected
+    
     async loadStudentPlacements() {
         if (!this.myProfile) return;
         const res = await fetch(`/api/student/placements/${this.myProfile.id}`);

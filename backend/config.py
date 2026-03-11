@@ -1,7 +1,8 @@
 import os
 from datetime import timedelta
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'I-am-vengeance2'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, '..', 'instance', 'placement_portal.db')

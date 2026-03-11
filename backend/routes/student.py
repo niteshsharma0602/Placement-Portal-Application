@@ -18,7 +18,7 @@ def init_student_routes(app, cache):
             'name': student.name,
             'branch': student.branch,
             'cgpa': student.cgpa,
-            'year': student.year,
+            'experience': student.experience,
             'skills': student.skills,
             'resume': student.resume,
             'is_blacklisted': student.is_blacklisted,
@@ -34,7 +34,7 @@ def init_student_routes(app, cache):
         student.name = data.get('name', student.name)
         student.branch = data.get('branch', student.branch)
         student.cgpa = data.get('cgpa', student.cgpa)
-        student.year = data.get('year', student.year)
+        student.experience = data.get('experience', student.experience)
         student.skills = data.get('skills', student.skills)
         student.resume = data.get('resume', student.resume)
         db.session.commit()
@@ -45,7 +45,6 @@ def init_student_routes(app, cache):
     @cache.cached(timeout=60, key_prefix='student_drives')
     def get_approved_drives():
         
-        # only fetch drives with status approved
         drives = PlacementDrive.query.filter_by(status='approved').all()
 
         return jsonify([{
@@ -59,7 +58,7 @@ def init_student_routes(app, cache):
             'description': d.description,
             'eligible_branch': d.eligible_branch,
             'eligible_cgpa': d.eligible_cgpa,
-            'eligible_year': d.eligible_year,
+            'experience': d.experience,
             'deadline': d.deadline.strftime('%Y-%m-%d') if d.deadline else None,
             'status': d.status,
             'salary': d.salary
@@ -86,7 +85,6 @@ def init_student_routes(app, cache):
         if drive.status != 'approved':
             return jsonify({'message': 'This drive is not open for applications'}), 403
 
-        # check if student already applied to this drive
         existing = Application.query.filter_by(
             student_id=student_id,
             drive_id=drive_id
@@ -94,14 +92,13 @@ def init_student_routes(app, cache):
         if existing:
             return jsonify({'message': 'You have already applied to this drive'}), 400
 
-        # eligibility check if student meets the criteria
         if drive.eligible_cgpa and student.cgpa < drive.eligible_cgpa:
             return jsonify({'message': f'You need minimum CGPA of {drive.eligible_cgpa} to apply'}), 403
 
         if drive.eligible_branch and drive.eligible_branch.lower() != student.branch.lower():
             return jsonify({'message': f'This drive is only for {drive.eligible_branch} branch'}), 403
 
-        if drive.eligible_year and drive.eligible_year > student.year:
+        if drive.experience and drive.experience > student.experience:
             return jsonify({'message': f'You do not have enough experience required'}), 403
 
         # create new application
@@ -148,12 +145,10 @@ def init_student_routes(app, cache):
                 'company_name': company.name if company else 'N/A',
                 'drive_title': drive.title if drive else 'N/A',
                 'salary': drive.salary if drive else None,
-                'joining_date': p.joining_date.strftime('%Y-%m-%d') if p.joining_date else None,
                 'created_at': p.created_at.strftime('%Y-%m-%d') if p.created_at else None
             })
         return jsonify(result), 200
     
-    #student gets a csv export of their application history via email
     @app.route('/api/student/export/<int:student_id>', methods=['POST'])
     def trigger_csv_export(student_id):
         from tasks import export_applications_csv
@@ -162,7 +157,6 @@ def init_student_routes(app, cache):
         if not student:
             return jsonify({'message': 'Student not found'}), 404
 
-        # Queue the task — runs asynchronously in Celery worker
         export_applications_csv.delay(student_id)
 
         return jsonify({'message': 'Export started! You will receive an email when it is ready.'}), 202

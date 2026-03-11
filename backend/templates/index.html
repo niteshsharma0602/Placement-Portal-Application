@@ -52,7 +52,7 @@
                                 <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="sf.cgpa" step="0.1" required></div>
                             </div>
                             <div class="row">
-                                <div class="col mb-2"><label class="form-label">Experience</label><input type="number" class="form-control" v-model="sf.year" required></div>
+                                <div class="col mb-2"><label class="form-label">Experience (yrs)</label><input type="number" class="form-control" v-model="sf.experience" required></div>
                                 <div class="col mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="sf.skills" required></div>
                             </div>
                             <button class="btn btn-light w-100 mt-2" @click="registerStudent" :disabled="loading">[[ loading ? 'Registering...' : 'Register' ]]</button>
@@ -133,7 +133,7 @@
                         <thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>CGPA</th><th>Experience</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             <tr v-for="s in students" :key="s.id">
-                                <td>[[ s.name ]]</td><td>[[ s.email ]]</td><td>[[ s.branch ]]</td><td>[[ s.cgpa ]]</td><td>[[ s.year ]] yr(s)</td>
+                                <td>[[ s.name ]]</td><td>[[ s.email ]]</td><td>[[ s.branch ]]</td><td>[[ s.cgpa ]]</td><td>[[ s.experience ]] yr(s)</td>
                                 <td><span class="badge" :class="s.is_blacklisted?'bg-danger':'bg-success'">[[ s.is_blacklisted?'Blocked':'Active' ]]</span></td>
                                 <td><button class="btn btn-outline-secondary btn-sm" @click="blacklistStudent(s.id,!s.is_blacklisted)">[[ s.is_blacklisted?'Unblock':'Block' ]]</button>
                                 <button class="btn btn-outline-danger btn-sm" @click="deactivateStudent(s.id)">[[ s.active?'Deactivate':'Activate' ]]</button>
@@ -264,7 +264,7 @@
                             <div class="col mb-2"><label class="form-label">Min CGPA</label><input type="number" class="form-control" v-model="df.eligible_cgpa" step="0.1"></div>
                         </div>
                         <div class="row">
-                            <div class="col mb-2"><label class="form-label">Eligible Year</label><input type="number" class="form-control" v-model="df.eligible_year"></div>
+                            <div class="col mb-2"><label class="form-label">Experience (yrs)</label><input type="number" class="form-control" v-model="df.experience"></div>
                             <div class="col mb-2"><label class="form-label">Deadline</label><input type="date" class="form-control" v-model="df.deadline"></div>
                         </div>
                         <div class="col mb-2"><label class="form-label">Salary (LPA)</label><input type="number" class="form-control" v-model="df.salary" step="0.1"></div>
@@ -272,7 +272,7 @@
                     </div>
                 </div>
 
-                <!-- Company Applications with Interview + Select buttons -->
+                <!-- Company Applications  -->
                 <div v-if="ct==='applications'">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0">Received Applications</h4>
@@ -330,14 +330,13 @@
                 <div v-if="ct==='placements'">
                     <h4 class="mb-3">Placed Students</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Student</th><th>Email</th><th>Drive</th><th>Salary</th><th>Joining Date</th></tr></thead>
+                        <thead><tr><th>Student</th><th>Email</th><th>Drive</th><th>Salary</th></tr></thead>
                         <tbody>
                             <tr v-for="p in myPlacements" :key="p.id">
                                 <td>[[ p.student_name ]]</td>
                                 <td>[[ p.student_email ]]</td>
                                 <td>[[ p.drive_title ]]</td>
                                 <td>[[ p.salary || '—' ]] Lpa</td>
-                                <td>[[ p.joining_date || '—' ]]</td>
                             </tr>
                             <tr v-if="myPlacements.length===0"><td colspan="5" class="text-center text-secondary">No placements yet</td></tr>
                         </tbody>
@@ -376,13 +375,13 @@
                                 <td>[[ d.deadline ]]</td>
                                 <td>[[ d.eligible_cgpa ]]</td>
                                 <td>[[ d.eligible_branch ]]</td>
-                                <td>[[ d.eligible_year || '—' ]] yr(s)</td>
+                                <td>[[ d.experience || '—' ]] yr(s)</td>
                                 <td>[[ d.salary || '—' ]]</td>
                                 <td><button class="btn btn-light btn-sm" @click="applyDrive(d.id)">Apply</button>
                                     <button class="btn btn-outline-secondary btn-sm" @click="selectedDrive=d">View</button>
                                 </td>
                             </tr>
-                            <tr v-if="filteredDrives.length===0"><td colspan="8" class="text-center text-secondary">No drives available</td></tr>
+                            <tr v-if="filteredDrives.length===0"><td colspan="9" class="text-center text-secondary">No drives available</td></tr>
                         </tbody>
                     </table>
                     <div class="card p-3 mt-3" style="max-width:400px" v-if="selectedDrive">
@@ -423,13 +422,12 @@
                 <div v-if="stt==='placements'">
                     <h4 class="mb-3">Placement History</h4>
                     <table class="table table-bordered table-hover">
-                        <thead><tr><th>Company</th><th>Drive Title</th><th>Salary</th><th>Joining Date</th></tr></thead>
+                        <thead><tr><th>Company</th><th>Drive Title</th><th>Salary</th></tr></thead>
                         <tbody>
                             <tr v-for="p in myStudentPlacements" :key="p.id">
                                 <td>[[ p.company_name ]]</td>
                                 <td>[[ p.drive_title ]]</td>
                                 <td>[[ p.salary || '—' ]] Lpa</td>
-                                <td>[[ p.joining_date || '—' ]]</td>
                             </tr>
                             <tr v-if="myStudentPlacements.length===0"><td colspan="4" class="text-center text-secondary">No placements yet</td></tr>
                         </tbody>
@@ -444,7 +442,7 @@
                         <p><strong>Name:</strong> [[ myProfile.name ]]</p>
                         <p><strong>Branch:</strong> [[ myProfile.branch ]]</p>
                         <p><strong>CGPA:</strong> [[ myProfile.cgpa ]]</p>
-                        <p><strong>Experience:</strong> [[ myProfile.year ]] yr(s)</p>
+                        <p><strong>Experience:</strong> [[ myProfile.experience ]] yr(s)</p>
                         <p><strong>Skills:</strong> [[ myProfile.skills ]]</p>
                         <p class="mb-0"><strong>Resume:</strong> [[ myProfile.resume || '—' ]]</p>
                         <button class="btn btn-outline-light btn-sm mt-3" @click="showEditProfile=!showEditProfile; editProfile={...myProfile}">
@@ -460,7 +458,7 @@
                         <div class="mb-2"><label class="form-label">Branch</label><input class="form-control" v-model="editProfile.branch"></div>
                         <div class="row">
                             <div class="col mb-2"><label class="form-label">CGPA</label><input type="number" class="form-control" v-model="editProfile.cgpa" step="0.1"></div>
-                            <div class="col mb-2"><label class="form-label">Experience</label><input type="number" class="form-control" v-model="editProfile.year"></div>
+                            <div class="col mb-2"><label class="form-label">Experience</label><input type="number" class="form-control" v-model="editProfile.experience"></div>
                         </div>
                         <div class="mb-2"><label class="form-label">Skills</label><input class="form-control" v-model="editProfile.skills"></div>
                         <div class="mb-2"><label class="form-label">Resume Link</label><input class="form-control" v-model="editProfile.resume" placeholder="Google Drive or LinkedIn link"></div>
@@ -489,7 +487,7 @@ createApp({
             page: 'login', currentUser: null, loading: false,
             tab: 'login', msg: '', msgOk: false,
             lf: { email: '', password: '' },
-            sf: { name: '', email: '', password: '', branch: '', cgpa: '', year: '', skills: '' },
+            sf: { name: '', email: '', password: '', branch: '', cgpa: '', experience: '', skills: '' },
             cf: { name: '', email: '', password: '', industry: '', website: '', hr_contact: '' },
 
             // admin data
@@ -498,7 +496,7 @@ createApp({
 
             // company data
             ct: 'dashboard', myCompany: null, myDrives: [], myApplications: [], myPlacements: [],
-            df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', eligible_year: '', deadline: '' , salary: ''},
+            df: { title: '', description: '', eligible_branch: '', eligible_cgpa: '', experience: '', deadline: '' , salary: ''},
             driveErr: '', driveOk: '',
             interviewDates: {},
 
